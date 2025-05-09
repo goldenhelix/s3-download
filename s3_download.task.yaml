@@ -1,0 +1,82 @@
+name: Download S3 Files
+description: |-
+    Download files from Amazon S3 using rclone.
+
+    To use this task, you'll need:
+    1. AWS Access Key ID
+    2. AWS Secret Access Key
+    3. S3 bucket name
+
+    Note:
+    Make sure your AWS credentials have the necessary permissions to access the specified S3 bucket.
+    It's recommended to use IAM roles with minimal required permissions for security best practices.
+
+agent_requirements:
+  cpu_cores: 1
+  memory_gb: 1
+
+parameters:
+  - name: aws_access_key_id
+    label: AWS Access Key ID
+    type: string
+
+  - name: aws_secret_access_key
+    label: AWS Secret Access Key
+    type: secret
+
+  - name: bucket
+    label: S3 Bucket Name
+    type: string
+
+  - name: base_path
+    label: Base Path
+    help: This should be the path within the bucket (i.e. "folder/subfolder/...")
+    type: string
+    optional: true
+
+  - name: output_directory
+    label: Output Directory
+    type: directory
+
+  - name: s3_provider
+    label: S3 Provider
+    type: enum
+    value: "AWS"
+    choices: [
+      "AWS", "Alibaba", "ArvanCloud", "Ceph", "ChinaMobile", "Cloudflare",
+      "DigitalOcean", "Dreamhost", "GCS", "HuaweiOBS", "IBMCOS", "IDrive",
+      "IONOS", "LyveCloud", "Leviia", "Liara", "Linode", "Magalu", "Minio",
+      "Netease", "Outscale", "Petabox", "RackCorp", "Rclone", "Scaleway",
+      "SeaweedFS", "Selectel", "StackPath", "Storj", "Synology", "TencentCOS",
+      "Wasabi", "Qiniu", "Other"
+    ]
+    optional: false
+
+  - name: dry_run
+    label: List Files Only (Dry Run)
+    type: boolean
+    value: 'false'
+
+steps:
+  - name: scriptTask
+    description: Download or list files from S3
+    type: cmd
+    command: bash
+    args:
+      - |-
+        # Create output directory if it doesn't exist
+        mkdir -p "${output_directory}"
+
+        if [ "${dry_run}" = "true" ]; then
+          # List files only
+          rclone ls --s3-provider="${s3_provider}" \
+            --s3-access-key-id="${aws_access_key_id}" \
+            --s3-secret-access-key="${aws_secret_access_key}" \
+            ":s3:${bucket}/${base_path}"
+        else
+          # Download files
+          rclone copy --s3-provider="${s3_provider}" \
+            --s3-access-key-id="${aws_access_key_id}" \
+            --s3-secret-access-key="${aws_secret_access_key}" \
+            ":s3:${bucket}/${base_path}" "${output_directory}"
+        fi
