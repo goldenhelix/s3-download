@@ -37,6 +37,7 @@ parameters:
   - name: output_directory
     label: Output Directory
     type: directory
+    supports_location_mode: 'no_append'
 
   - name: s3_provider
     label: S3 Provider
